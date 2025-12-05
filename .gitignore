@@ -1,0 +1,48 @@
+# Dependencies
+node_modules
+
+# Build outputs
+build
+/dist
+/android/app/build
+/ios/build
+
+# Environment files
+.env*
+!.env.example
+
+# IDE files
+.vscode
+.idea
+*.swp
+*.swo
+
+# OS generated files
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+
+# React Native
+__tests__/__snapshots__/
+
+# Firebase
+firebase-debug.log*
+
+# Notifee
+notifee.config.json
+
+# TypeScript
+*.tsbuildinfo
+
+# Package lock files (project explicitly excludes package-lock.json)
+package-lock.json
+yarn.lock
+
+# Metro bundler
+.metro-health-check*
+
+# Temporary files
+*.tmp
+*.temp

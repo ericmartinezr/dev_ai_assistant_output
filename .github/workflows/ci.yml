@@ -1,0 +1,108 @@
+name: CI
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+  workflow_dispatch:
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18.x'
+          cache: 'npm'
+      - name: Install dependencies
+        run: npm install
+      - name: Run ESLint with zero-warnings policy
+        run: npm run lint --max-warnings 0
+      - name: Run Prettier check
+        run: npx prettier --check .
+      - name: Run security audit
+        run: npm audit --audit-level=high
+
+  type-check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18.x'
+          cache: 'npm'
+      - name: Install dependencies
+        run: npm install
+      - name: Run TypeScript check
+        run: npm run type-check
+
+  unit-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18.x'
+          cache: 'npm'
+      - name: Install dependencies
+        run: npm install
+      - name: Run unit tests with coverage
+        run: npm run test:unit -- --coverage
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v3
+        with:
+          file: ./coverage/lcov.info
+          flags: unit-tests
+
+  integration-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18.x'
+          cache: 'npm'
+      - name: Install dependencies
+        run: npm install
+      - name: Run integration tests with coverage
+        run: npm run test:integration -- --coverage
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v3
+        with:
+          file: ./coverage/lcov.info
+          flags: integration-tests
+
+  build-android:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18.x'
+          cache: 'npm'
+      - name: Install dependencies
+        run: npm install
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v2
+      - name: Setup Android signing
+        run: |
+          echo "$ANDROID_KEYSTORE" > keystore.jks.b64
+          base64 -d keystore.jks.b64 > keystore.jks
+        env:
+          ANDROID_KEYSTORE: ${{ secrets.ANDROID_KEYSTORE }}
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+      - name: Build Android bundle
+        run: npm run build:android
+        env:
+          ANDROID_KEYSTORE_PATH: keystore.jks
+          ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
